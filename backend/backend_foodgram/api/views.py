@@ -1,5 +1,9 @@
+from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
+from recipes.models import (Favorite, Ingredient, IngredientQuantity, Recipe,
+                            ShoppingCart, Tag)
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import (LimitOffsetPagination,
@@ -7,15 +11,12 @@ from rest_framework.pagination import (LimitOffsetPagination,
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import (Favorites, Ingredient, IngredientQuantity, Recipe,
-                            ShoppingCart, Tag)
 from users.models import CustomUser, Follow
-
 from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
 from .serializers import (CustomUserSerializer, FollowSerializer,
                           IngredientSerializer, RecipeSerializer,
-                          RecipeSubSerializer, TagSerializer)
-from .utils import download_page
+                          TagSerializer)
+from .utils import add_delete
 
 
 class CustomUserViewSet(UserViewSet):
@@ -47,8 +48,7 @@ class CustomUserViewSet(UserViewSet):
     )
     def subscriptions(self, request):
         user = request.user
-        user = get_object_or_404(CustomUser, id=user.id)
-        queryset = [i.author for i in user.follower.all()]
+        queryset = user.follower.all
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = FollowSerializer(
@@ -70,7 +70,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     permission_classes = (IsAuthorOrReadOnly,)
     pagination_class = PageNumberPagination
-    #filter_class = UserRecipeFilter
 
     @action(
         methods=['post', 'delete'],
@@ -79,17 +78,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def favorite(self, request, pk=None):
-        user = request.user
-        recipe = get_object_or_404(
-            Recipe,
-            id=self.kwargs.get('pk')
-        )
-        if request.method == 'POST':
-            favorite = Favorites.objects.create(user=user, recipe=recipe)
-            serializer = RecipeSubSerializer(favorite.recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        Favorites.objects.filter(user=user, recipe=recipe).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return add_delete(request, Favorite, pk)
     
     @action(
         methods=['post', 'delete'],
@@ -98,20 +87,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def shopping_cart(self, request, pk=None):
-        user = request.user
-        recipe = get_object_or_404(
-            Recipe,
-            id=self.kwargs.get('pk')
-        )
-        if request.method == 'POST':
-            cart_recipes = ShoppingCart.objects.create(
-                user=user,
-                recipe=recipe
-            )
-            serializer = RecipeSubSerializer(cart_recipes.recipe,)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return add_delete(request, ShoppingCart, pk)
     
     @action(
         detail=False,
@@ -119,25 +95,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
-        download_dict = {}
         user = request.user
         cart_list = IngredientQuantity.objects.filter(
             recipe__cart_shoppings__user=user
-        ).values_list(
+        ).values(
             'ingredient__name',
-            'ingredient__measurement_unit',
-            'amount'
+            'ingredient__measurement_unit'
+        ).annotate(sum_amount=Sum('amount'))
+        list_cart = []
+        for step, ingredient in enumerate(cart_list, start=1):
+            name = ingredient["ingredient__name"]
+            amount = ingredient["sum_amount"]
+            unit = ingredient["ingredient__measurement_unit"]
+            list_cart.append(
+                f'{step}. '
+                f'{name} '
+                f'{amount} '
+                f'{unit}\n',
+            )
+        response = HttpResponse(
+            list_cart,
+            content_type='text/plain'
         )
-        for i in cart_list:
-            name = i[0]
-            if name not in download_dict:
-                download_dict[name] = {
-                    'measurement_unit': i[1],
-                    'amount': i[2]
-                }
-            else:
-                download_dict[name]['amount'] += i[2]
-        return download_page(download_dict)
+        response['Content-Disposition'] = (
+            'attachment; '
+            'filename="shopping_list.txt"'
+        )
+        return 
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
