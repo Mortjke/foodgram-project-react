@@ -179,7 +179,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             recipe=instance
         ).delete()
         self.add_ingredients(ingredients_data, instance)
-        instance.save()
         return instance
 
 
