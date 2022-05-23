@@ -42,7 +42,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_NAME }}:v1.0.1
+          tags: mortjke/workflow
 
   deploy:
     name: Deploy on Server
