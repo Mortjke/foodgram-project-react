@@ -9,9 +9,11 @@ services:
       - ../.env
   
   frontend:
-    image: mortjke/front_workflow:latest
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
     volumes:
-      - ./frontend/:/app/result_build/
+      - ../frontend/:/app/result_build/
   
   backend:
     build:
