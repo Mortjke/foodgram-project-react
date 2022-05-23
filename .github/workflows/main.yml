@@ -3,6 +3,28 @@ name: Django-app workflow
 on: [push]
 
 jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Install dependencies
+      run: | 
+        # обновление pip
+        python -m pip install --upgrade pip
+        # установка зависимостей
+        cd backend/backend_foodgram/
+        pip install -r requirements.txt 
+    - name: Test with flake8 and django tests
+      run: |
+        # перейти в папку, содержащую manage.py — 
+        #<корневая_папка_infra_actions>/<папка_проекта>/manage.py
+        cd backend/backend_foodgram/
   build_and_push_to_docker_hub:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
