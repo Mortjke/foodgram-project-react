@@ -50,6 +50,14 @@ jobs:
           file: ./backend/backend_foodgram/Dockerfile
           push: true
           tags: mortjke/workflow:latest
+      - name: Push frontend
+        # Пуш образа фронтенда в Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          context: ./frontend/
+          file: ./frontend/Dockerfile
+          push: true
+          tags: mortjke/workflow:latest
   deploy:
     runs-on: ubuntu-latest
     needs: build_and_push_to_docker_hub
