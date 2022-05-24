@@ -60,7 +60,6 @@ jobs:
         passphrase: ${{ secrets.PASSPHRASE }}
         script: | 
           sudo docker pull mortjke/workflow
-          sudo docker pull mortjke/front_workflow
           sudo docker-compose stop
           sudo docker-compose rm -f backend
           touch .env
