@@ -8,19 +8,16 @@ services:
       - ./.env
   
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: mortjke/front_workflow:latest
     volumes:
-      - ../frontend/:/app/result_build/
+      - ./frontend/:/app/result_build/
 
   backend:
-    build:
-      context: ../backend/backend_foodgram
-      dockerfile: Dockerfile
+    image: mortjke/workflow:latest
     restart: always
-    ports:
-      - "8000:8000"
+    volumes:
+      - static_value:/app/static/
+      - media_value:/app/media/
     depends_on:
       - db
     env_file:
