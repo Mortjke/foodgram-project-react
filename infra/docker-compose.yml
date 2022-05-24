@@ -13,7 +13,9 @@ services:
       - ./frontend/:/app/result_build/
 
   backend:
-    image: mortjke/workflow:latest
+    build:
+      context: ../backend/backend_foodgram
+      dockerfile: Dockerfile
     restart: always
     volumes:
       - static_value:/app/static/
