@@ -130,7 +130,7 @@ DJOSER = {
         "user_list": ("rest_framework.permissions.AllowAny",)
     },
     "SERIALIZERS": {
-        'user_create': 'api.serializers.SignUpSerializer',
+        'user_create': 'api.serializers.CustomUserCreateSerializer',
         'user': 'api.serializers.CustomUserSerializer',
         'current_user': 'api.serializers.CustomUserSerializer',
     }
