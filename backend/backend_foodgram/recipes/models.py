@@ -103,7 +103,7 @@ class IngredientQuantity(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['ingredients', 'recipe'],
+                fields=['ingredient', 'recipe'],
                 name='Ингридиенты можно использовать только 1 раз!'
             )
         ]
