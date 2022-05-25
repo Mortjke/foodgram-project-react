@@ -57,7 +57,7 @@ class Follow(models.Model):
                 name='Вы уже подписаны на этого автора!'
             ),
             models.CheckConstraint(
-                check=~Q(user=F('author')),
+                check=~Q(user=F('following')),
                 name='Подсписываться на cамого себя нельзя!'
             )
         ]
@@ -65,4 +65,4 @@ class Follow(models.Model):
         verbose_name_plural = 'Подписки'
 
     def __str__(self):
-        return f'{self.user} {self.author}'
+        return f'{self.user} {self.following}'
