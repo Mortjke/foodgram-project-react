@@ -15,7 +15,7 @@ from .paginator import PageNumberPagination
 from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
 from .serializers import (CustomUserSerializer, FollowSerializer,
                           IngredientSerializer, RecipeSerializer,
-                          TagSerializer)
+                          RecipeSerializerGet, TagSerializer)
 from .utils import add_delete
 
 
@@ -72,6 +72,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     filter_class = UserRecipeFilter
 
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return RecipeSerializerGet
+        return RecipeSerializer
+
     @action(
         methods=['post', 'delete'],
         detail=True,
@@ -122,7 +127,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'attachment; '
             'filename="shopping_list.txt"'
         )
-        return 
+        return response
+    
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
