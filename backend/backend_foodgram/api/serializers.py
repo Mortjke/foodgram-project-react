@@ -199,19 +199,44 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         )
     
     def validate(self, data):
-        ingredients = data.pop('ingredients')
-        ingredient_list = []
-        for ingredient_item in ingredients:
-            ingredient = get_object_or_404(
-                Ingredient,
-                id=ingredient_item['id']
-            )
-            if ingredient in ingredient_list:
-                raise serializers.ValidationError(
-                    'Ингредиент уже добавлен'
-                )
-            ingredient_list.append(ingredient)
-        data['ingredients'] = ingredients
+        ingredients = self.initial_data.get('ingredients')
+        if not ingredients:
+            raise serializers.ValidationError({
+                'ingredients': 'Добавьте ингредиент!'
+            })
+        ingredients_list = []
+        for ingredient in ingredients:
+            ingredient_id = ingredient['id']
+            if ingredient_id in ingredients_list:
+                raise serializers.ValidationError({
+                    'ingredients': 'Ингредиенты повторяются!'
+                })
+            ingredients_list.append(ingredient_id)
+            amount = ingredient['amount']
+            if int(amount) <= 0:
+                raise serializers.ValidationError({
+                    'amount': 'Не менее 1 ингредиента!'
+                })
+
+        tags = self.initial_data.get('tags')
+        if not tags:
+            raise serializers.ValidationError({
+                'tags': 'Добавьте Тэг!'
+            })
+        tags_list = []
+        for tag in tags:
+            if tag in tags_list:
+                raise serializers.ValidationError({
+                    'tags': 'Тэги повторяются!'
+                })
+            tags_list.append(tag)
+
+        cooking_time = self.initial_data.get('cooking_time')
+        if int(cooking_time) <= 0:
+            raise serializers.ValidationError({
+                'cooking_time': 'Не менее 1 минуты!'
+            })
+
         return data
 
     def add_ingredients(self, ingredients, recipe):
