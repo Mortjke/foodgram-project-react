@@ -219,7 +219,7 @@ class RecipeSerializerGet(RecipeSerializer):
     )
     ingredients = IngredientQuantitySerializer(
         many=True,
-        source='amountofingrediend_set',
+        source='ingredientquantity_set',
     )
 
     class Meta:
