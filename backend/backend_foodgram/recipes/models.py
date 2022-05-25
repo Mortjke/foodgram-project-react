@@ -6,17 +6,13 @@ from users.models import CustomUser
 
 class Tag(models.Model):
     name = models.CharField(
-        max_length=200,
-        verbose_name='Название тега'
+        max_length=100, unique=True, verbose_name='Название тега'
     )
     color = models.CharField(
-        max_length=7,
-        verbose_name='Цвет тега'
+        verbose_name='Цветовой HEX-код', unique=True, max_length=7
     )
     slug = models.SlugField(
-        max_length=200,
-        unique=True,
-        verbose_name='Слаг тега'
+        max_length=100, unique=True, verbose_name='Уникальный слаг'
     )
 
     class Meta:
@@ -29,12 +25,10 @@ class Tag(models.Model):
 
 class Ingredient(models.Model):
     name = models.CharField(
-        max_length=200,
-        verbose_name='Название ингридиента'
+        max_length=200, unique=True, verbose_name='Название ингредиента'
     )
     measurement_unit = models.CharField(
-        max_length=200,
-        verbose_name='Единицы изменения'
+        max_length=200, verbose_name='Единица измерения'
     )
 
     class Meta:
@@ -62,12 +56,9 @@ class Recipe(models.Model):
         blank=False,
         verbose_name='Изображение рецепта'
     )
-    text = models.TextField(verbose_name='Текст рецепта')
+    text = models.TextField(max_length=200, verbose_name='Описание рецепта')
     ingredients = models.ManyToManyField(
-        Ingredient,
-        related_name='recipes',
-        through='IngredientQuantity',
-        verbose_name='Ингридиенты рецепта'
+        Ingredient, through='IngredientQuantity', verbose_name='Ингредиенты'
     )
     tags = models.ManyToManyField(
         Tag,
@@ -92,10 +83,8 @@ class Recipe(models.Model):
 
 
 class IngredientQuantity(models.Model):
-    ingredients = models.ForeignKey(
-        Ingredient, 
-        on_delete=models.CASCADE,
-        verbose_name='Ингридиенты рецепта'
+    ingredient = models.ForeignKey(
+        Ingredient, on_delete=models.CASCADE, verbose_name='Ингредиент'
     )
     recipe = models.ForeignKey(
         Recipe, 
@@ -125,18 +114,14 @@ class IngredientQuantity(models.Model):
         return f'{self.recipe} {self.ingredients}'
 
 
-class Favourite(models.Model):
+class Favorite(models.Model):
     user = models.ForeignKey(
-        CustomUser, 
-        on_delete=models.CASCADE, 
-        related_name='favourites',
-        verbose_name='Оценивший пользователь'
+        CustomUser, on_delete=models.CASCADE,
+        related_name='favorites', verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
-        Recipe, 
-        on_delete=models.CASCADE,
-        related_name='favourites',
-        verbose_name='Избранный рецепт'
+        Recipe, on_delete=models.CASCADE,
+        related_name='favorites', verbose_name='Рецепт'
     )
 
     class Meta:
@@ -153,18 +138,14 @@ class Favourite(models.Model):
         return f'{self.recipe}{self.user}'
 
 
-class CartShopping(models.Model):
+class ShoppingCart(models.Model):
     user = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name='cart_shoppings',
-        verbose_name='Пользователь, добавивший ингр. в корзину'
+        CustomUser, on_delete=models.CASCADE,
+        related_name='shopping_carts', verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='cart_shoppings',
-        verbose_name='Рецепт в корзине пользователя'
+        Recipe, on_delete=models.CASCADE,
+        related_name='shopping_carts', verbose_name='Рецепт'
     )
 
     class Meta:

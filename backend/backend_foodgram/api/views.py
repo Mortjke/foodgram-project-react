@@ -7,15 +7,15 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import (Favourite, Ingredient, IngredientQuantity, Recipe,
-                            CartShopping, Tag)
+from recipes.models import (Favorite, Ingredient, IngredientQuantity, Recipe,
+                            ShoppingCart, Tag)
 from users.models import CustomUser, Follow
 from .filters import IngredientFilter, UserRecipeFilter
 from .paginator import PageNumberPagination
 from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
 from .serializers import (CustomUserSerializer, FollowSerializer,
-                          IngredientSerializer, RecipeSerializer,
-                          RecipeSerializerGet, TagSerializer)
+                          IngredientSerializer, RecipeListSerializer,
+                          RecipeWriteSerializer, TagSerializer)
 from .utils import add_delete
 
 
@@ -67,15 +67,14 @@ class CustomUserViewSet(UserViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
     permission_classes = (IsAuthorOrReadOnly,)
     pagination_class = PageNumberPagination
     filter_class = UserRecipeFilter
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return RecipeSerializerGet
-        return RecipeSerializer
+        if self.action in ('list', 'retrieve'):
+            return RecipeListSerializer
+        return RecipeWriteSerializer
 
     @action(
         methods=['post', 'delete'],
@@ -84,7 +83,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def favorite(self, request, pk=None):
-        return add_delete(request, Favourite, pk)
+        return add_delete(request, Favorite, pk)
     
     @action(
         methods=['post', 'delete'],
@@ -93,7 +92,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def shopping_cart(self, request, pk=None):
-        return add_delete(request, CartShopping, pk)
+        return add_delete(request, ShoppingCart, pk)
     
     @action(
         detail=False,

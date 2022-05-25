@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from recipes.models import Recipe
-from .serializers import RecipeSubSerializer
+from .serializers import FollowRecipesSerializer
 
 
 def add_delete(request, model, obj_id):
@@ -32,7 +32,7 @@ def add_delete(request, model, obj_id):
         user=user,
         recipe=recipe
     )
-    serializer = RecipeSubSerializer(recipe)
+    serializer = FollowRecipesSerializer(recipe)
     return Response(
         serializer.data,
         status=status.HTTP_201_CREATED
