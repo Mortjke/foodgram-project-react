@@ -53,7 +53,7 @@ class Follow(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'author'],
+                fields=['user', 'following'],
                 name='Вы уже подписаны на этого автора!'
             ),
             models.CheckConstraint(
