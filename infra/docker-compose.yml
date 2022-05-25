@@ -8,16 +8,12 @@ services:
       - ./.env
   
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: mortjke/workflow:latest
     volumes:
-      - ../frontend/:/app/result_build/
+      - ./frontend/:/app/result_build/
 
   backend:
-    build:
-      context: ../backend/backend_foodgram
-      dockerfile: Dockerfile
+    image: mortjke/workflow:latest
     restart: always
     volumes:
       - static_value:/app/static/
