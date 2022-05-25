@@ -52,15 +52,15 @@ class FollowSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CustomUser
-        fields = (
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'recipes',
-            'is_subscribed',
-            'recipes_count'
+        exclude = (
+            "last_login",
+            "is_superuser",
+            "is_staff",
+            "is_active",
+            "date_joined",
+            "password",
+            "groups",
+            "user_permissions"
         )
 
     def get_recipes(self, obj):
@@ -83,13 +83,43 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientQuantitySerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredients.id')
-    name = serializers.ReadOnlyField(source='ingredients.name')
-    measurement_unit = serializers.ReadOnlyField(source='ingredients.measurement_unit')
+    id = serializers.IntegerField(source='ingredient.id')
+    name = serializers.ReadOnlyField(
+        source='ingredient.name',
+        read_only=True
+    )
+    measurement_unit = serializers.ReadOnlyField(
+        source='ingredient.measurement_unit',
+        read_only=True
+    )
 
     class Meta:
         model = IngredientQuantity
-        fields = '__all__'
+        fields = (
+            'id',
+            'name',
+            'amount',
+            'measurement_unit'
+        )
+
+
+class IngredientWriteSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(write_only=True)
+    amount = serializers.IntegerField(write_only=True)
+
+    class Meta:
+        model = IngredientQuantity
+        fields = (
+            'id',
+            'amount'
+        )
+
+    def validate_amount(self, amount):
+        if amount <= 0:
+            raise serializers.ValidationError(
+                'Убедитесь, что это значение больше 0.'
+            )
+        return amount
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -100,15 +130,18 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    author = CustomUserSerializer(read_only=True)
-    ingredients = serializers.SerializerMethodField()
-    image = Base64ImageField(max_length=None, use_url=True)
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(),
-        many=True
-    )
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
+    author = CustomUserSerializer(
+        many=False,
+        read_only=True
+    )
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True,
+    )
+    image = Base64ImageField()
+    ingredients = IngredientWriteSerializer(many=True)
 
     class Meta:
         model = Recipe
@@ -177,6 +210,21 @@ class RecipeSerializer(serializers.ModelSerializer):
         ).delete()
         self.add_ingredients(ingredients_data, instance)
         return instance
+
+
+class RecipeSerializerGet(RecipeSerializer):
+    tags = TagSerializer(
+        read_only=True,
+        many=True
+    )
+    ingredients = IngredientQuantitySerializer(
+        many=True,
+        source='amountofingrediend_set',
+    )
+
+    class Meta:
+        model = Recipe
+        fields = '__all__'
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
