@@ -151,9 +151,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'filename="shopping_list.txt"'
         )
         return response
-    
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
