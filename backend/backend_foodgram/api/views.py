@@ -6,6 +6,8 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 
 from recipes.models import (Favorite, Ingredient, IngredientQuantity, Recipe,
                             ShoppingCart, Tag)
@@ -13,56 +15,47 @@ from users.models import CustomUser, Follow
 from .filters import IngredientFilter, UserRecipeFilter
 from .paginator import PageNumberPagination
 from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
-from .serializers import (CustomUserSerializer, FavoriteSerializer, 
-                          FollowSerializer, IngredientSerializer,
+from .serializers import (FavoriteSerializer, 
+                          FollowSerializer, FollowListSerializer,
+                          IngredientSerializer,
                           RecipeListSerializer, RecipeWriteSerializer,
                           ShoppingCartSerializer, TagSerializer)
 
 
-class CustomUserViewSet(UserViewSet):
-    queryset = CustomUser.objects.all()
-    serializer_class = CustomUserSerializer
-    pagination_class = PageNumberPagination
+class FollowApiView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    @action(
-        methods=['post', 'delete'],
-        detail=True,
-        url_path='subscribe',
-        permission_classes=(IsAuthenticated,),
-    )
+    @action(detail=True, methods=['post', ],)
+    def post(self, request, id):
+        data = {'user': request.user.id, 'following': id}
+        serializer = FollowSerializer(data=data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def follow(self, request, id=None):
+    def delete(self, request, id):
         user = request.user
-        author = get_object_or_404(CustomUser, id=self.kwargs.get('id'))
-        if request.method == 'POST':
-            follow = Follow.objects.create(user=user, following=author)
-            serializer = FollowSerializer(follow.following, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        Follow.objects.filter(user=user, following=author).delete()
+        following = get_object_or_404(CustomUser, id=id)
+        follow = get_object_or_404(
+            Follow, user=user, following=following
+        )
+        follow.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-    @action(
-        detail=False,
-        url_path='subscriptions',
-        permission_classes=(IsAuthenticated,),
-    )
-    def subscriptions(self, request):
+
+
+class FollowListAPIView(ListAPIView):
+    pagination_class = PageNumberPagination
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
         user = request.user
         queryset = CustomUser.objects.filter(following__user=user)
         page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = FollowSerializer(
-                page,
-                many=True,
-                context={'request': request},
-            )
-            return self.get_paginated_response(serializer.data)
-        serializer = FollowSerializer(
-            queryset,
-            many=True,
-            context={'request': request},
+        serializer = FollowListSerializer(
+            page, many=True,
+            context={'request': request}
         )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return self.get_paginated_response(serializer.data)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
