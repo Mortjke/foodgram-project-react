@@ -12,10 +12,9 @@ router.register('tags', TagViewSet, basename='tags')
 router.register('recipes', RecipeViewSet, basename='recipes')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('users/<int:id>/subscribe/', FollowApiView.as_view(), name='subscribe'),
+    path('users/subscriptions/', FollowListAPIView.as_view(), name='subscription'),
     path('auth/', include('djoser.urls.authtoken')),
-    path('users/<int:id>/subscribe/', FollowApiView.as_view(),
-         name='subscribe'),
-    path('users/subscriptions/', FollowListAPIView.as_view(),
-         name='subscription'),
+    path('', include('djoser.urls')),
+    path('', include(router.urls)),
 ]
