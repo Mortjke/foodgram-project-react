@@ -17,7 +17,6 @@ from .serializers import (CustomUserSerializer, FavoriteSerializer,
                           FollowSerializer, IngredientSerializer,
                           RecipeListSerializer, RecipeWriteSerializer,
                           ShoppingCartSerializer, TagSerializer)
-from .utils import add_delete
 
 
 class CustomUserViewSet(UserViewSet):
@@ -49,7 +48,7 @@ class CustomUserViewSet(UserViewSet):
     )
     def subscriptions(self, request):
         user = request.user
-        queryset = user.follower.all
+        queryset = CustomUser.objects.filter(following__user=user)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = FollowSerializer(
