@@ -61,12 +61,6 @@ class FollowSerializer(serializers.ModelSerializer):
             )
         return data
 
-    def to_representation(self, instance):
-        request = self.context.get('request')
-        context = {'request': request}
-        return FollowListSerializer(
-            instance.following, context=context).data
-
 
 class FollowRecipesSerializer(serializers.ModelSerializer):
     class Meta:
