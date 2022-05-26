@@ -35,7 +35,7 @@ class UserRecipeFilter(FilterSet):
     def filter_is_favorited(self, queryset, name, value):
         if value and self.request.user.is_authenticated:
             queryset = queryset.filter(
-                favourites__user=self.request.user
+                favorites__user=self.request.user
             )
         return queryset
 
