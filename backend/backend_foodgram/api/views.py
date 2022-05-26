@@ -13,9 +13,10 @@ from users.models import CustomUser, Follow
 from .filters import IngredientFilter, UserRecipeFilter
 from .paginator import PageNumberPagination
 from .permissions import IsAdminOrReadOnly, IsAuthorOrReadOnly
-from .serializers import (CustomUserSerializer, FollowSerializer,
-                          IngredientSerializer, RecipeListSerializer,
-                          RecipeWriteSerializer, TagSerializer)
+from .serializers import (CustomUserSerializer, FavoriteSerializer, 
+                          FollowSerializer, IngredientSerializer,
+                          RecipeListSerializer, RecipeWriteSerializer,
+                          ShoppingCartSerializer, TagSerializer)
 from .utils import add_delete
 
 
@@ -83,7 +84,23 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,)
     )
     def favorite(self, request, pk=None):
-        return add_delete(request, Favorite, pk)
+        if request.method == 'POST':
+            data = {'user': request.user.id, 'recipe': pk}
+            serializer = FavoriteSerializer(
+                data=data, context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if request.method == 'DELETE':
+            user = request.user
+            recipe = get_object_or_404(Recipe, id=pk)
+            favorite = get_object_or_404(
+                Favorite, user=user, recipe=recipe
+            )
+            favorite.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return None
     
     @action(
         methods=['post', 'delete'],
@@ -91,8 +108,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='shopping_cart',
         permission_classes=(IsAuthenticated,)
     )
-    def shopping_cart(self, request, pk=None):
-        return add_delete(request, ShoppingCart, pk)
+    def shopping_cart(self, request, pk):
+        if request.method == 'POST':
+            data = {'user': request.user.id, 'recipe': pk}
+            serializer = ShoppingCartSerializer(
+                data=data, context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if request.method == 'DELETE':
+            user = request.user
+            recipe = get_object_or_404(Recipe, id=pk)
+            shopping_cart = get_object_or_404(
+                ShoppingCart, user=user, recipe=recipe
+            )
+            shopping_cart.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return None
     
     @action(
         detail=False,
