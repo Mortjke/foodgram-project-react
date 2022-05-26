@@ -36,7 +36,7 @@ class CustomUserViewSet(UserViewSet):
         author = get_object_or_404(CustomUser, id=self.kwargs.get('id'))
         if request.method == 'POST':
             follow = Follow.objects.create(user=user, following=author)
-            serializer = FollowSerializer(follow.author, context={'request': request})
+            serializer = FollowSerializer(follow.following, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         Follow.objects.filter(user=user, following=author).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
